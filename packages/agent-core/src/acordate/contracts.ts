@@ -66,6 +66,12 @@ export type CompleteReminderRequest = {
   reminderId: string;
 };
 
+export type ListRemindersRequest = {
+  userId: string;
+  statuses: ReminderStatus[];
+  limit: number;
+};
+
 export type SaveMemoryResult =
   | { ok: true; memory: MemoryRecord }
   | ToolFailure;
@@ -82,6 +88,10 @@ export type CompleteReminderResult =
   | { ok: true; reminder: ReminderRecord }
   | ToolFailure;
 
+export type ListRemindersResult =
+  | { ok: true; reminders: ReminderRecord[] }
+  | ToolFailure;
+
 export interface MemoryService {
   save(input: SaveMemoryRequest): Promise<SaveMemoryResult>;
   search(input: SearchMemoryRequest): Promise<SearchMemoryResult>;
@@ -89,6 +99,7 @@ export interface MemoryService {
 
 export interface ReminderService {
   create(input: CreateReminderRequest): Promise<CreateReminderResult>;
+  list(input: ListRemindersRequest): Promise<ListRemindersResult>;
   complete(input: CompleteReminderRequest): Promise<CompleteReminderResult>;
 }
 

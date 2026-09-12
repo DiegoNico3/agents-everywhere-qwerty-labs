@@ -1,8 +1,13 @@
 import { tool } from "ai";
-import type { AcordateServices, ToolFailure } from "./contracts";
+import type {
+  AcordateServices,
+  ReminderStatus,
+  ToolFailure,
+} from "./contracts";
 import {
   completeReminderInputSchema,
   createReminderInputSchema,
+  listRemindersInputSchema,
   saveMemoryInputSchema,
   searchMemoryInputSchema,
   type ParsedRunAcordateAgentInput,
@@ -12,6 +17,7 @@ export type AcordateToolName =
   | "saveMemory"
   | "searchMemory"
   | "createReminder"
+  | "listReminders"
   | "completeReminder";
 
 export type AcordateToolOutcome =
@@ -129,6 +135,31 @@ export function createAcordateTools(
               context: reminderContext,
               sourceMemoryIds,
               sourceMessageId: context.sourceMessageId,
+            }),
+          ),
+          observe,
+        );
+      },
+    }),
+
+    listReminders: tool({
+      description:
+        "List the user's real reminders when they ask what reminders they have, what is pending, what was completed, or similar. Use active unless the user explicitly asks for another status. Never invent reminders outside the returned result.",
+      inputSchema: listRemindersInputSchema,
+      execute: async ({ filter, limit }) => {
+        const statuses: ReminderStatus[] =
+          filter === "active"
+            ? ["pending", "sent"]
+            : filter === "all"
+              ? ["pending", "sent", "completed", "failed"]
+              : [filter];
+        return report(
+          "listReminders",
+          await safely(() =>
+            services.reminders.list({
+              userId: context.userId,
+              statuses,
+              limit,
             }),
           ),
           observe,

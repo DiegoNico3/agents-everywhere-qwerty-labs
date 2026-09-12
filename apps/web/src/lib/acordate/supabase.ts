@@ -1,6 +1,7 @@
 import type {
   AcordateServices,
   CreateReminderRequest,
+  ListRemindersRequest,
   MemoryRecord,
   ReminderRecord,
   ToolFailure,
@@ -244,6 +245,14 @@ export class AcordateSupabaseStore {
     return toReminder(rows[0]);
   }
 
+  async listReminders(input: ListRemindersRequest): Promise<ReminderRecord[]> {
+    const statuses = input.statuses.map(escapeFilter).join(",");
+    const rows = await this.#rows<ReminderRow>(
+      `reminders?user_id=eq.${escapeFilter(input.userId)}&status=in.(${statuses})&select=id,user_id,title,scheduled_at,status,context,source_memory_ids,sent_at,completed_at,created_at&order=scheduled_at.asc&limit=${input.limit}`,
+    );
+    return rows.map(toReminder);
+  }
+
   async completeSentReminder(
     userId: string,
     reminderId: string,
@@ -318,6 +327,17 @@ export function createAcordateServices(
         } catch (error) {
           console.error("Acordate reminder create failed", error);
           return failure("UNAVAILABLE", "No pude crear el recordatorio. Intentá de nuevo.");
+        }
+      },
+      async list(input) {
+        try {
+          return { ok: true, reminders: await store.listReminders(input) };
+        } catch (error) {
+          console.error("Acordate reminder list failed", error);
+          return failure(
+            "UNAVAILABLE",
+            "No pude consultar tus recordatorios. Intentá de nuevo.",
+          );
         }
       },
       async complete(input) {

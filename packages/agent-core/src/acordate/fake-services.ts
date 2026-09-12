@@ -136,6 +136,23 @@ export class InMemoryReminderService implements ReminderService {
     return { ok: true as const, reminder };
   }
 
+  async list({
+    userId,
+    statuses,
+    limit,
+  }: Parameters<ReminderService["list"]>[0]) {
+    const allowedStatuses = new Set(statuses);
+    const reminders = (this.#records.get(userId) ?? [])
+      .filter((reminder) => allowedStatuses.has(reminder.status))
+      .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))
+      .slice(0, limit)
+      .map((reminder) => ({
+        ...reminder,
+        sourceMemoryIds: [...reminder.sourceMemoryIds],
+      }));
+    return { ok: true as const, reminders };
+  }
+
   markSent(userId: string, reminderId: string): ReminderRecord | undefined {
     const records = this.#records.get(userId) ?? [];
     const index = records.findIndex((record) => record.id === reminderId);

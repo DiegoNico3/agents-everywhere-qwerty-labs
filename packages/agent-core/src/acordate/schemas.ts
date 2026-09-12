@@ -46,6 +46,24 @@ export const completeReminderInputSchema = z
   })
   .strict();
 
+export const listRemindersInputSchema = z
+  .object({
+    filter: z
+      .enum(["active", "pending", "sent", "completed", "failed", "all"])
+      .default("active")
+      .describe(
+        "Which reminders to list. Use active for pending and already-sent reminders that are not completed.",
+      ),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .default(10)
+      .describe("Maximum number of reminders to return."),
+  })
+  .strict();
+
 const acordateMessageSchema = z
   .object({
     role: z.enum(["user", "assistant"]),
@@ -91,6 +109,7 @@ export type CreateReminderInput = z.infer<typeof createReminderInputSchema>;
 export type CompleteReminderInput = z.infer<
   typeof completeReminderInputSchema
 >;
+export type ListRemindersInput = z.infer<typeof listRemindersInputSchema>;
 export type RunAcordateAgentInput = z.input<
   typeof runAcordateAgentInputSchema
 >;

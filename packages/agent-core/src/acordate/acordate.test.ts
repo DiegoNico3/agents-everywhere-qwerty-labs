@@ -165,6 +165,54 @@ describe("Acordate contracts and tools", () => {
     assert.equal(completed.ok, true);
     assert.equal(services.reminders.recordsFor("telegram-user-1")[0]?.status, "completed");
   });
+
+  it("lists only the requesting user's active reminders", async () => {
+    const services = createInMemoryAcordateServices(CLOCK);
+    const first = await services.reminders.create({
+      userId: "telegram-user-1",
+      title: "Retirar certificado",
+      scheduledAt: TOMORROW,
+      context: "Llevá cédula.",
+      sourceMemoryIds: [],
+      sourceMessageId: "telegram-message-1",
+    });
+    const second = await services.reminders.create({
+      userId: "telegram-user-1",
+      title: "Comprar leche",
+      scheduledAt: "2026-09-14T18:00:00-03:00",
+      context: "Comprar leche.",
+      sourceMemoryIds: [],
+      sourceMessageId: "telegram-message-2",
+    });
+    await services.reminders.create({
+      userId: "another-user",
+      title: "Recordatorio privado",
+      scheduledAt: TOMORROW,
+      context: "No debe aparecer.",
+      sourceMemoryIds: [],
+      sourceMessageId: "telegram-message-3",
+    });
+    assert.equal(first.ok, true);
+    assert.equal(second.ok, true);
+    if (!first.ok) return;
+    services.reminders.markSent("telegram-user-1", first.reminder.id);
+
+    const tools = createAcordateTools(services, baseInput());
+    const result = await executeTool(tools.listReminders, {
+      filter: "active" as const,
+      limit: 10,
+    });
+
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.deepEqual(
+      result.reminders.map(({ title, status }) => ({ title, status })),
+      [
+        { title: "Retirar certificado", status: "sent" },
+        { title: "Comprar leche", status: "pending" },
+      ],
+    );
+  });
 });
 
 describe("Acordate multi-step agent", () => {
@@ -224,5 +272,48 @@ describe("Acordate multi-step agent", () => {
       [saved.memory.id],
     );
     assert.equal(model.doGenerateCalls.length, 3);
+  });
+
+  it("uses listReminders to answer which reminders are active", async () => {
+    const services = createInMemoryAcordateServices(CLOCK);
+    await services.reminders.create({
+      userId: "telegram-user-1",
+      title: "Comprar leche",
+      scheduledAt: TOMORROW,
+      context: "Comprar leche.",
+      sourceMemoryIds: [],
+      sourceMessageId: "telegram-message-1",
+    });
+    const model = new MockLanguageModelV3({
+      doGenerate: [
+        generated(
+          [{
+            type: "tool-call",
+            toolCallId: "list-1",
+            toolName: "listReminders",
+            input: JSON.stringify({ filter: "active", limit: 10 }),
+          }],
+          "tool-calls",
+        ),
+        generated(
+          [{
+            type: "text",
+            text: "Tenés un recordatorio activo: comprar leche mañana a las 10.",
+          }],
+          "stop",
+        ),
+      ],
+    });
+
+    const result = await runAcordateAgent(
+      {
+        ...baseInput(),
+        messages: [{ role: "user", content: "¿Qué recordatorios tengo?" }],
+      },
+      { ...services, model },
+    );
+
+    assert.match(result.text, /comprar leche/i);
+    assert.equal(model.doGenerateCalls.length, 2);
   });
 });
