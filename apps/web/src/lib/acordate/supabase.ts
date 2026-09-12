@@ -228,6 +228,10 @@ export class AcordateSupabaseStore {
       body: JSON.stringify({
         user_id: input.userId,
         title: input.title,
+        // `start_at` belongs to the pre-existing reminders schema and remains
+        // NOT NULL after migration 009. Keep it mirrored with the canonical
+        // `scheduled_at` field while both schemas coexist.
+        start_at: input.scheduledAt,
         scheduled_at: input.scheduledAt,
         status: "pending",
         context: input.context,
