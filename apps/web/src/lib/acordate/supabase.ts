@@ -228,7 +228,8 @@ export class AcordateSupabaseStore {
       body: JSON.stringify({
         user_id: input.userId,
         title: input.title,
-        // Legacy 001 columns still required by the live table.
+        // Legacy 001 columns remain required by the live table. Mirror the
+        // canonical schedule while both schemas coexist.
         start_at: input.scheduledAt,
         task: input.context,
         timezone: "America/Asuncion",
