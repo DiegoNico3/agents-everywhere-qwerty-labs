@@ -9,24 +9,24 @@ Choose your city on the [global event page](https://aitinkerers.org/hackathons/g
 - [ ] We identify inherited templates, libraries, prompts, components, and starter code separately from our event work
 
 **What we inherited**
-<!-- Include this starter kit and any reused examples. -->
+Agents, Everywhere starter kit, Next.js/CopilotKit project structure and shared development dependencies.
 
 **What we built during the hackathon**
-<!-- Describe the new core interaction and point to its implementation. Running the supplied incident demo alone does not establish a new project. -->
+Acordate's Telegram workflow: per-user memory, a Gemini tool-calling agent, persistent Supabase reminders, protected webhook and scheduler endpoints, Telegram delivery, and completion through “Hecho”. See `apps/web/src/lib/acordate/`, `apps/web/src/lib/telegram/`, `packages/agent-core/src/acordate/`, and `packages/reminders/`.
 
 ## Title and description
 
 **What you built**
-<!-- Explain the complete interaction your demo shows. -->
+Acordate is a Telegram assistant that saves information a person explicitly asks it to remember, retrieves that context when creating a reminder, sends the reminder at the scheduled time, and marks it completed when the person replies “Hecho”.
 
 **Who it is for**
-<!-- Name a person in a concrete situation. -->
+People managing everyday procedures and tasks—for example, someone who must remember the documents needed to collect a certificate.
 
 **Why the context matters**
-<!-- What did the agent know or do because it lived in this surface? -->
+Telegram supplies the identity, conversation and delivery channel: Acordate keeps memory isolated to that user, sends the future alert back to the same chat, and resolves “Hecho” against that user's latest delivered reminder.
 
 **Sponsor technologies used**
-<!-- Name the tools you actually used and the visible contribution of each. -->
+Google Gemini through Vercel AI SDK interprets requests and selects validated tools. The project uses Telegram Bot API for the conversational surface and Supabase/PostgreSQL for durable users, memories and reminders.
 
 ## Evidence for the judging criteria
 
